@@ -11,16 +11,33 @@ help: ## Show this help message
 # === Environment Setup ===
 
 .PHONY: install
-install: ## Install dependencies using pip
-	pip install -r requirements-dev.txt
+install: ## Install dependencies using uv (recommended)
+	uv pip install -e ".[dev]"
 
 .PHONY: install-prod
-install-prod: ## Install production dependencies only
+install-prod: ## Install production dependencies only using uv
+	uv pip install -e .
+
+.PHONY: install-pip
+install-pip: ## Install dependencies using pip
+	pip install -r requirements-dev.txt
+
+.PHONY: install-pip-prod
+install-pip-prod: ## Install production dependencies only using pip
 	pip install -r requirements.txt
 
 .PHONY: poetry-install
 poetry-install: ## Install dependencies using Poetry
 	poetry install
+
+.PHONY: uv-sync
+uv-sync: ## Sync dependencies with requirements files using uv
+	uv pip sync requirements-dev.txt
+
+.PHONY: uv-compile
+uv-compile: ## Compile requirements files from pyproject.toml using uv
+	uv pip compile pyproject.toml -o requirements.txt
+	uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 
 .PHONY: setup
 setup: install pre-commit-install ## Complete development environment setup
@@ -31,15 +48,15 @@ setup: install pre-commit-install ## Complete development environment setup
 
 .PHONY: dev
 dev: ## Run development server
-	python -m claude_code_tracer --debug
+	uv run python -m claude_code_tracer --debug
 
 .PHONY: dev-api
 dev-api: ## Run FastAPI development server with auto-reload
-	uvicorn claude_code_tracer.api.main:app --reload --host 0.0.0.0 --port 8000
+	uv run uvicorn claude_code_tracer.api.main:app --reload --host 0.0.0.0 --port 8000
 
 .PHONY: dev-monitor
 dev-monitor: ## Run Claude Code monitor in development mode
-	python -m claude_code_tracer.core.monitor --debug
+	uv run python -m claude_code_tracer.core.monitor --debug
 
 # === Docker ===
 
@@ -68,39 +85,39 @@ docker-clean: ## Clean Docker resources
 
 .PHONY: db-setup
 db-setup: ## Initialize database schema
-	python scripts/setup_db.py
+	uv run python scripts/setup_db.py
 
 .PHONY: db-migrate
 db-migrate: ## Run database migrations
-	python scripts/migrate.py
+	uv run python scripts/migrate.py
 
 .PHONY: db-seed
 db-seed: ## Seed database with sample data
-	python scripts/seed_db.py
+	uv run python scripts/seed_db.py
 
 .PHONY: db-reset
 db-reset: ## Reset database (WARNING: destroys all data)
 	@echo "WARNING: This will destroy all data. Press Ctrl+C to cancel, or Enter to continue."
 	@read confirm
-	python scripts/reset_db.py
+	uv run python scripts/reset_db.py
 
 # === Testing ===
 
 .PHONY: test
 test: ## Run unit tests
-	pytest tests/unit -v
+	uv run pytest tests/unit -v
 
 .PHONY: test-integration
 test-integration: ## Run integration tests
-	pytest tests/integration -v
+	uv run pytest tests/integration -v
 
 .PHONY: test-all
 test-all: ## Run all tests with coverage
-	pytest -v --cov=claude_code_tracer --cov-report=html --cov-report=term
+	uv run pytest -v --cov=claude_code_tracer --cov-report=html --cov-report=term
 
 .PHONY: test-watch
 test-watch: ## Run tests in watch mode
-	ptw -- -v
+	uv run ptw -- -v
 
 .PHONY: coverage
 coverage: test-all ## Generate coverage report
@@ -111,20 +128,20 @@ coverage: test-all ## Generate coverage report
 
 .PHONY: format
 format: ## Format code with black and isort
-	black src tests scripts
-	isort src tests scripts
+	uv run black src tests scripts
+	uv run isort src tests scripts
 
 .PHONY: lint
 lint: ## Run linters (ruff)
-	ruff check src tests scripts
+	uv run ruff check src tests scripts
 
 .PHONY: lint-fix
 lint-fix: ## Fix linting issues automatically
-	ruff check --fix src tests scripts
+	uv run ruff check --fix src tests scripts
 
 .PHONY: type-check
 type-check: ## Run type checking with mypy
-	mypy src
+	uv run mypy src
 
 .PHONY: quality
 quality: format lint type-check ## Run all code quality checks
@@ -165,19 +182,19 @@ publish: build ## Publish to PyPI (requires authentication)
 
 .PHONY: metrics
 metrics: ## Start Prometheus metrics server
-	python -m claude_code_tracer.monitoring.metrics
+	uv run python -m claude_code_tracer.monitoring.metrics
 
 .PHONY: monitor-start
 monitor-start: ## Start background monitoring daemon
-	claude-tracer start --daemon
+	uv run claude-tracer start --daemon
 
 .PHONY: monitor-stop
 monitor-stop: ## Stop background monitoring daemon
-	claude-tracer stop
+	uv run claude-tracer stop
 
 .PHONY: monitor-status
 monitor-status: ## Check monitoring daemon status
-	claude-tracer status
+	uv run claude-tracer status
 
 # === Utilities ===
 
@@ -202,12 +219,12 @@ secrets-check: ## Check for exposed secrets
 
 .PHONY: update-deps
 update-deps: ## Update dependencies to latest versions
-	pip-compile --upgrade requirements.in -o requirements.txt
-	pip-compile --upgrade requirements-dev.in -o requirements-dev.txt
+	uv pip compile pyproject.toml --upgrade -o requirements.txt
+	uv pip compile pyproject.toml --extra dev --upgrade -o requirements-dev.txt
 
 .PHONY: shell
 shell: ## Start Python shell with project context
-	python -m IPython
+	uv run python -m IPython
 
 .PHONY: logs
 logs: ## Tail application logs
@@ -215,7 +232,7 @@ logs: ## Tail application logs
 
 .PHONY: backup
 backup: ## Create backup of local data
-	python scripts/backup.py
+	uv run python scripts/backup.py
 
 # === CI/CD ===
 

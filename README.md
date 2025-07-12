@@ -1,69 +1,69 @@
 # Claude Code Tracer
 
-> Claude Code のインタラクティブセッションを追跡・記録し、Supabase に保存する開発支援ツール
+> A development support tool that tracks and records Claude Code interactive sessions and stores them in Supabase
 
 [![Python Version](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## 概要
+## Overview
 
-Claude Code Tracer は、Claude Code（Anthropic の AI コーディングアシスタント）とのインタラクションを自動的に記録・分析するシステムです。開発者の生産性向上、学習効果の可視化、チーム内でのナレッジ共有を支援します。
+Claude Code Tracer is a system that automatically records and analyzes interactions with Claude Code (Anthropic's AI coding assistant). It supports developer productivity improvements, visualization of learning outcomes, and knowledge sharing within teams.
 
-### 主な機能
+### Key Features
 
-- 🔍 **リアルタイムセッション追跡**: Claude Code の全インタラクションを自動記録
-- 🛡️ **プライバシー保護**: 機密情報の自動検出・マスキング
-- 📊 **使用パターン分析**: AI による開発効率の分析とインサイト生成
-- 🔄 **GitHub 統合**: 自動バックアップと履歴管理
-- 📈 **ダッシュボード**: Web UI による視覚的な分析結果表示
-- ⚡ **リアルタイム同期**: Supabase Realtime による即時データ更新
+- 🔍 **Real-time Session Tracking**: Automatically records all Claude Code interactions
+- 🛡️ **Privacy Protection**: Automatic detection and masking of sensitive information
+- 📊 **Usage Pattern Analysis**: AI-driven analysis of development efficiency and insight generation
+- 🔄 **GitHub Integration**: Automatic backup and history management
+- 📈 **Dashboard**: Visual analysis results display via Web UI
+- ⚡ **Real-time Sync**: Instant data updates via Supabase Realtime
 
-## クイックスタート
+## Quick Start
 
-### 前提条件
+### Prerequisites
 
-- Python 3.13 以上
+- Python 3.13 or higher
 - Docker & Docker Compose
-- Supabase アカウント
-- Claude Code CLI（インストール済み）
+- Supabase account
+- Claude Code CLI (installed)
 
-### インストール
+### Installation
 
 ```bash
-# リポジトリのクローン
+# Clone the repository
 git clone https://github.com/your-org/claude-code-tracer.git
 cd claude-code-tracer
 
-# 環境変数の設定
+# Set up environment variables
 cp .env.example .env
-# .env ファイルを編集して必要な情報を入力
+# Edit the .env file with your configuration
 
-# 開発環境の起動
+# Start development environment
 make dev-setup
 make dev-run
 ```
 
-### 基本的な使い方
+### Basic Usage
 
 ```bash
-# Claude Code Tracer の起動
+# Start Claude Code Tracer
 python -m claude_code_tracer
 
-# バックグラウンドで自動追跡開始
+# Start automatic tracking in background
 claude-tracer start --daemon
 
-# セッション履歴の確認
+# View session history
 claude-tracer sessions list
 
-# 特定セッションの詳細表示
+# Show details of a specific session
 claude-tracer sessions show <session-id>
 
-# Web ダッシュボードの起動
+# Launch Web dashboard
 claude-tracer web
 ```
 
-## システムアーキテクチャ
+## System Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -86,103 +86,103 @@ claude-tracer web
                         └─────────────┘
 ```
 
-## 主要コンポーネント
+## Core Components
 
 ### 1. Session Monitor
-Claude Code の実行を監視し、セッション情報をリアルタイムで収集
+Monitors Claude Code execution and collects session information in real-time
 
 ### 2. Privacy Guard
-機密情報（API キー、パスワード、個人情報など）を自動検出してマスキング
+Automatically detects and masks sensitive information (API keys, passwords, personal information, etc.)
 
 ### 3. Analytics Engine
-収集データから使用パターンを分析し、開発効率の改善提案を生成
+Analyzes usage patterns from collected data and generates development efficiency improvement suggestions
 
 ### 4. Supabase Integration
-リアルタイムデータ同期とセキュアなストレージを提供
+Provides real-time data synchronization and secure storage
 
-## 設定
+## Configuration
 
-### 環境変数
+### Environment Variables
 
 ```env
-# Supabase 設定
+# Supabase Configuration
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Claude Code 設定
+# Claude Code Configuration
 ANTHROPIC_API_KEY=your-api-key
 
-# GitHub 統合（オプション）
+# GitHub Integration (Optional)
 GITHUB_TOKEN=your-personal-access-token
 GITHUB_REPO=your-org/backup-repo
 
-# アプリケーション設定
+# Application Settings
 LOG_LEVEL=INFO
 PRIVACY_MODE=strict  # strict | moderate | minimal
-AUTO_SYNC_INTERVAL=300  # 秒単位
+AUTO_SYNC_INTERVAL=300  # in seconds
 ```
 
-### プライバシー設定
+### Privacy Settings
 
-`config/privacy.yml` でカスタムパターンを定義可能:
+You can define custom patterns in `config/privacy.yml`:
 
 ```yaml
 custom_patterns:
   - pattern: 'COMPANY_SECRET_\w+'
-    description: '社内秘密キー'
+    description: 'Company secret keys'
     replacement: '[COMPANY_SECRET]'
     level: MAXIMUM
 ```
 
-## 開発
+## Development
 
-### プロジェクト構造
+### Project Structure
 
 ```
 src/claude_code_tracer/
-├── core/               # コア機能
-│   ├── monitor.py     # セッション監視
-│   ├── privacy.py     # プライバシー保護
-│   └── analyzer.py    # データ分析
-├── api/               # FastAPI エンドポイント
-├── models/            # データモデル
-├── services/          # 外部サービス連携
-└── utils/            # ユーティリティ
+├── core/               # Core functionality
+│   ├── monitor.py     # Session monitoring
+│   ├── privacy.py     # Privacy protection
+│   └── analyzer.py    # Data analysis
+├── api/               # FastAPI endpoints
+├── models/            # Data models
+├── services/          # External service integrations
+└── utils/            # Utilities
 ```
 
-### テスト実行
+### Running Tests
 
 ```bash
-# 単体テスト
+# Unit tests
 make test
 
-# 統合テスト
+# Integration tests
 make test-integration
 
-# カバレッジレポート
+# Coverage report
 make coverage
 ```
 
-### コントリビューション
+### Contributing
 
-1. Fork してブランチを作成 (`git checkout -b feature/amazing-feature`)
-2. 変更をコミット (`git commit -m 'Add amazing feature'`)
-3. ブランチをプッシュ (`git push origin feature/amazing-feature`)
-4. Pull Request を作成
+1. Fork and create a branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Push to the branch (`git push origin feature/amazing-feature`)
+4. Create a Pull Request
 
-## ライセンス
+## License
 
-このプロジェクトは MIT ライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルをご覧ください。
+This project is published under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## サポート
+## Support
 
-- 📚 [ドキュメント](docs/)
+- 📚 [Documentation](docs/)
 - 🐛 [Issue Tracker](https://github.com/your-org/claude-code-tracer/issues)
 - 💬 [Discussions](https://github.com/your-org/claude-code-tracer/discussions)
 
-## 謝辞
+## Acknowledgments
 
-- [Anthropic](https://anthropic.com) - Claude Code の開発
-- [Supabase](https://supabase.com) - リアルタイムデータベース基盤
-- [vibe-logger](https://github.com/thierryvolpiatto/vibe-logger) - AI-native ロギングの着想
+- [Anthropic](https://anthropic.com) - Development of Claude Code
+- [Supabase](https://supabase.com) - Real-time database infrastructure
+- [vibe-logger](https://github.com/thierryvolpiatto/vibe-logger) - Inspiration for AI-native logging
