@@ -1,108 +1,152 @@
-# Claude Code Tracer
+# Claude Code Tracer 🔍
 
-> A development support tool that tracks and records Claude Code interactive sessions and stores them in Supabase
+<pre>
+╭─────────────────────────────────────────────────────────────────────╮
+│                                                                     │
+│   ┌─────────────┐      ┌──────────────────┐      ┌──────────────┐ │
+│   │ Claude CLI  │ ───▶ │ Claude Code      │ ───▶ │   Session    │ │
+│   │   (claude)  │      │     Tracer       │      │   Storage    │ │
+│   └─────────────┘      └──────────────────┘      └──────────────┘ │
+│         │                       │                         │         │
+│         │                       │                         │         │
+│         ▼                       ▼                         ▼         │
+│   ╔═══════════╗          ╔═══════════╗            ╔═══════════╗   │
+│   ║   User    ║          ║ PTY Magic ║            ║   Local/  ║   │
+│   ║ Terminal  ║          ║ Monitors  ║            ║ Supabase  ║   │
+│   ╚═══════════╝          ╚═══════════╝            ╚═══════════╝   │
+│                                                                     │
+╰─────────────────────────────────────────────────────────────────────╯
+</pre>
+
+**Transparently monitor and record Claude CLI sessions** 🎯
 
 [![Python Version](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## Overview
+## ✨ Features
 
-Claude Code Tracer is a system that automatically records and analyzes interactions with Claude Code (Anthropic's AI coding assistant). It supports developer productivity improvements, visualization of learning outcomes, and knowledge sharing within teams.
+- 🔒 **Completely transparent** - Claude CLI usage remains exactly the same
+- 📝 **Automatic recording** - Captures all conversations automatically
+- 🛡️ **Privacy protection** - Auto-masks API keys and personal information
+- 💾 **Flexible storage** - Local or Supabase storage options
+- 🎨 **Clean display** - Removes UI decorations for essential content only
 
-### Key Features
+## 🚀 Quick Start
 
-- 🔍 **Real-time Session Tracking**: Automatically records all Claude Code interactions
-- 🛡️ **Privacy Protection**: Automatic detection and masking of sensitive information
-- 📊 **Usage Pattern Analysis**: AI-driven analysis of development efficiency and insight generation
-- 🔄 **GitHub Integration**: Automatic backup and history management
-- 📈 **Dashboard**: Visual analysis results display via Web UI
-- ⚡ **Real-time Sync**: Instant data updates via Supabase Realtime
+### 1. Start monitoring Claude CLI
 
-## Quick Start
+```bash
+# Run in terminal
+$ python claude_tracer.py
+
+⚠️  Using local storage mode (no Supabase configured)
+   Sessions will be saved to ./sessions/
+🚀 Claude Code Tracer - PTY Monitor
+==================================================
+📝 Session ID: pty-20250712-223357
+📁 Logs saved to: sessions/pty-20250712-223357.json
+==================================================
+Starting claude...
+
+╭────────────────────────────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                                                  │
+│                                                                            │
+│   /help for help, /status for your current setup                           │
+│                                                                            │
+│   cwd: /home/user/project                                                  │
+╰────────────────────────────────────────────────────────────────────────────╯
+
+> [Use Claude normally as usual!]
+```
+
+### 2. View sessions
+
+```bash
+# List all sessions
+$ python view_session.py --list
+
+📂 Available Sessions:
+----------------------------------------------------------------------
+1. pty-20250712-223357.json
+   Time: 2025-07-12 22:33:57 | Interactions: 2 | Status: completed
+2. pty-20250712-221234.json
+   Time: 2025-07-12 22:12:34 | Interactions: 5 | Status: completed
+
+# View specific session
+$ python view_session.py pty-20250712-223357.json
+
+🔍 Claude Code Tracer Session Viewer
+======================================================================
+📋 Session ID: pty-20250712-223357
+📁 Project: /home/user/project
+🕐 Start: 2025-07-12 22:33:57
+🕑 End: 2025-07-12 22:34:33
+📊 Total interactions: 2
+🔧 Monitor type: pty
+======================================================================
+
+### Interaction 1 [2025-07-12 22:34:08]
+----------------------------------------------------------------------
+👤 USER:
+   Write a Python function to generate Fibonacci sequence
+
+🤖 CLAUDE:
+   Here are several ways to implement a Fibonacci sequence generator:
+
+   def fibonacci_iterative(n):
+       """Generate Fibonacci sequence up to n terms using iteration"""
+       if n <= 0:
+           return []
+       elif n == 1:
+           return [0]
+       
+       fib = [0, 1]
+       for i in range(2, n):
+           fib.append(fib[i-1] + fib[i-2])
+       return fib[:n]
+----------------------------------------------------------------------
+```
+
+## 📦 Installation
 
 ### Prerequisites
 
-- Python 3.13 or higher
-- Docker & Docker Compose
-- Supabase account
-- Claude Code CLI (installed)
+- Python 3.13+
+- Claude CLI (`claude` command) installed and working
 
-### Installation
+### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/claude-code-tracer.git
+# 1. Clone repository
+git clone https://github.com/yourusername/claude-code-tracer.git
 cd claude-code-tracer
 
-# Set up environment variables
+# 2. Install dependencies (choose one)
+
+# Using pip
+pip install -r requirements.txt
+
+# Using uv (recommended)
+uv pip install -e .
+
+# Using poetry
+poetry install
+
+# 3. Environment setup (optional, for Supabase)
 cp .env.example .env
-# Edit the .env file with your configuration
-
-# Start development environment
-make dev-setup
-make dev-run
+# Edit .env to configure Supabase credentials
 ```
 
-### Basic Usage
+## 🔧 Configuration
 
-```bash
-# Start Claude Code Tracer
-python -m claude_code_tracer
+### Local Storage Mode (Default)
 
-# Start automatic tracking in background
-claude-tracer start --daemon
+No configuration needed! Sessions are automatically saved to `./sessions/` directory.
 
-# View session history
-claude-tracer sessions list
+### Supabase Mode
 
-# Show details of a specific session
-claude-tracer sessions show <session-id>
-
-# Launch Web dashboard
-claude-tracer web
-```
-
-## System Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Claude Code   │────│  Chat Logger    │────│    Supabase     │
-│   (Terminal)    │    │     System      │    │   PostgreSQL    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                               │                        │
-                       ┌───────┴───────┐                │
-                       │               │                │
-                ┌─────────────┐ ┌─────────────┐         │
-                │  Background │ │  Web UI     │         │
-                │   Collector │ │ Dashboard   │         │
-                └─────────────┘ └─────────────┘         │
-                                       │                │
-                               ┌───────┴────────────────┘
-                               │
-                        ┌─────────────┐
-                        │   GitHub    │
-                        │ Integration │
-                        └─────────────┘
-```
-
-## Core Components
-
-### 1. Session Monitor
-Monitors Claude Code execution and collects session information in real-time
-
-### 2. Privacy Guard
-Automatically detects and masks sensitive information (API keys, passwords, personal information, etc.)
-
-### 3. Analytics Engine
-Analyzes usage patterns from collected data and generates development efficiency improvement suggestions
-
-### 4. Supabase Integration
-Provides real-time data synchronization and secure storage
-
-## Configuration
-
-### Environment Variables
+To use Supabase, configure `.env` file:
 
 ```env
 # Supabase Configuration
@@ -110,79 +154,174 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Claude Code Configuration
-ANTHROPIC_API_KEY=your-api-key
-
-# GitHub Integration (Optional)
-GITHUB_TOKEN=your-personal-access-token
-GITHUB_REPO=your-org/backup-repo
-
-# Application Settings
-LOG_LEVEL=INFO
-PRIVACY_MODE=strict  # strict | moderate | minimal
-AUTO_SYNC_INTERVAL=300  # in seconds
+# Privacy Settings (optional)
+PRIVACY_MODE=strict  # strict, moderate, minimal
 ```
 
-### Privacy Settings
+## 🛡️ Privacy Protection
 
-You can define custom patterns in `config/privacy.yml`:
+The following information is automatically masked:
+
+- API keys (OpenAI, Anthropic, GitHub, etc.)
+- Database connection strings
+- Email addresses
+- Phone numbers
+- Credit card numbers
+- IP addresses
+- Passwords
+
+Custom patterns can be configured in `config/privacy.yml`:
 
 ```yaml
 custom_patterns:
-  - pattern: 'COMPANY_SECRET_\w+'
-    description: 'Company secret keys'
-    replacement: '[COMPANY_SECRET]'
-    level: MAXIMUM
+  - name: "Company API Key"
+    pattern: 'INTERNAL_API_[A-Z0-9]+'
+    replacement: "[INTERNAL_API]"
+    level: HIGH
 ```
 
-## Development
-
-### Project Structure
+## 🏗️ Architecture
 
 ```
-src/claude_code_tracer/
-├── core/               # Core functionality
-│   ├── monitor.py     # Session monitoring
-│   ├── privacy.py     # Privacy protection
-│   └── analyzer.py    # Data analysis
-├── api/               # FastAPI endpoints
-├── models/            # Data models
-├── services/          # External service integrations
-└── utils/            # Utilities
+claude-code-tracer/
+├── claude_tracer.py      # Main entry point
+├── view_session.py       # Session viewer
+├── src/
+│   └── claude_code_tracer/
+│       ├── core/
+│       │   ├── pty_monitor.py    # PTY-based monitoring
+│       │   └── privacy.py        # Privacy protection
+│       ├── models/               # Data models
+│       ├── services/             # Supabase integration
+│       └── utils/                # Utilities
+├── sessions/             # Local session storage
+├── config/
+│   └── privacy.yml       # Privacy pattern configuration
+└── docs/                 # Documentation
 ```
 
-### Running Tests
+## 💡 Usage Examples
+
+### Basic Usage
 
 ```bash
-# Unit tests
-make test
+# Monitor Claude CLI
+python claude_tracer.py
 
-# Integration tests
-make test-integration
+# Run with debug output (for troubleshooting)
+python claude_tracer.py --debug
 
-# Coverage report
-make coverage
+# Monitor different command
+python claude_tracer.py --command "python"
 ```
 
-### Contributing
+### Session Management
 
-1. Fork and create a branch (`git checkout -b feature/amazing-feature`)
-2. Commit your changes (`git commit -m 'Add amazing feature'`)
-3. Push to the branch (`git push origin feature/amazing-feature`)
-4. Create a Pull Request
+```bash
+# List recent sessions
+python view_session.py --list
 
-## License
+# View specific session
+python view_session.py sessions/pty-20250712-223357.json
 
-This project is published under the MIT License. See the [LICENSE](LICENSE) file for details.
+# Export sessions (planned feature)
+python export_sessions.py --format markdown
+```
 
-## Support
+## 📊 Session Data Format
 
-- 📚 [Documentation](docs/)
-- 🐛 [Issue Tracker](https://github.com/your-org/claude-code-tracer/issues)
-- 💬 [Discussions](https://github.com/your-org/claude-code-tracer/discussions)
+Sessions are stored in the following JSON format:
 
-## Acknowledgments
+```json
+{
+  "id": "pty-20250712-223357",
+  "session_id": "pty-20250712-223357",
+  "project_path": "/home/user/project",
+  "start_time": "2025-07-12T13:33:57.558350",
+  "end_time": "2025-07-12T13:34:33.201156",
+  "status": "completed",
+  "total_interactions": 2,
+  "interactions": [
+    {
+      "id": "int-0",
+      "sequence_number": 0,
+      "timestamp": "2025-07-12T13:34:08.637982",
+      "user_prompt": "Write a Python function...",
+      "claude_response": "Here are several ways to...",
+      "message_type": "interaction"
+    }
+  ],
+  "metadata": {
+    "monitor_type": "pty",
+    "command": "claude"
+  }
+}
+```
 
-- [Anthropic](https://anthropic.com) - Development of Claude Code
+## 🔍 Troubleshooting
+
+### Claude CLI not found
+
+```bash
+# Check claude command path
+which claude
+
+# Use specific path
+python claude_tracer.py --command /path/to/claude
+```
+
+### Sessions not being recorded
+
+```bash
+# Run with debug mode
+python claude_tracer.py --debug
+
+# Check debug logs
+cat sessions/debug-*.log
+```
+
+### Privacy settings verification
+
+```bash
+# Check current configuration
+cat config/privacy.yml
+
+# Test privacy patterns
+python -m claude_code_tracer.core.privacy --test
+```
+
+## 📚 Documentation
+
+- [Architecture Design](docs/architecture.md) - System design details
+- [Setup Guide](docs/setup.md) - Detailed installation instructions
+- [Usage Guide](docs/usage.md) - Advanced usage methods
+- [API Reference](docs/api.md) - Programmatic usage
+- [Development Guide](docs/development.md) - Contributor guide
+
+## 🤝 Contributing
+
+Pull requests are welcome!
+
+1. Fork this repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+- [Anthropic](https://anthropic.com) - For developing Claude CLI
 - [Supabase](https://supabase.com) - Real-time database infrastructure
-- [vibe-logger](https://github.com/thierryvolpiatto/vibe-logger) - Inspiration for AI-native logging
+- Various open source projects for PTY implementation inspiration
+
+---
+
+<div align="center">
+Made with ❤️ for the Claude Code community
+</div>

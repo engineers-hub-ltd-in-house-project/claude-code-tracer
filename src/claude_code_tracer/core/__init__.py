@@ -2,17 +2,11 @@
 Core functionality for Claude Code Tracer
 """
 
-from .analyzer import ClaudeUsageAnalyzer
-from .monitor import ClaudeCodeMonitor, start_monitoring
-from .privacy import PrivacyGuard, SensitivePattern, SensitivityLevel
-from .session_manager import SessionManager
+from .pty_monitor import PTYMonitor
+from .privacy import PrivacyGuard, get_privacy_guard
 
 __all__ = [
-    "ClaudeCodeMonitor",
-    "start_monitoring",
+    "PTYMonitor",
     "PrivacyGuard",
-    "SensitivePattern",
-    "SensitivityLevel",
-    "SessionManager",
-    "ClaudeUsageAnalyzer",
+    "get_privacy_guard",
 ]

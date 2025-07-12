@@ -1,131 +1,137 @@
-"""
-Configuration management using pydantic-settings
-"""
+"""Configuration management for Claude Code Tracer."""
 
-from functools import lru_cache
-from typing import Optional, List
-from enum import Enum
+import os
+from pathlib import Path
+from typing import Literal, Optional
 
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, validator
-
-
-class PrivacyMode(str, Enum):
-    """Privacy protection levels"""
-    STRICT = "strict"
-    MODERATE = "moderate"
-    MINIMAL = "minimal"
-
-
-class Environment(str, Enum):
-    """Application environments"""
-    DEVELOPMENT = "development"
-    PRODUCTION = "production"
-    TESTING = "testing"
 
 
 class Settings(BaseSettings):
-    """Application settings"""
-    
-    # Supabase Configuration
-    supabase_url: str = Field(..., description="Supabase project URL")
-    supabase_key: str = Field(..., description="Supabase anon key")
-    supabase_service_role_key: str = Field(..., description="Supabase service role key")
-    
-    # Claude/Anthropic Configuration
-    anthropic_api_key: str = Field(..., description="Anthropic API key")
-    
-    # GitHub Integration (Optional)
-    github_token: Optional[str] = Field(None, description="GitHub personal access token")
-    github_repo: Optional[str] = Field(None, description="GitHub repository for backups")
-    github_branch: str = Field("main", description="GitHub branch")
-    
-    # Application Configuration
-    log_level: str = Field("INFO", description="Logging level")
-    privacy_mode: PrivacyMode = Field(PrivacyMode.STRICT, description="Privacy protection mode")
-    auto_sync_interval: int = Field(300, description="Auto sync interval in seconds")
-    enable_realtime: bool = Field(True, description="Enable real-time monitoring")
-    
-    # API Server Configuration
-    api_host: str = Field("0.0.0.0", description="API server host")
-    api_port: int = Field(8000, description="API server port")
-    api_reload: bool = Field(False, description="Enable auto-reload")
-    
-    # Session Monitoring
-    max_concurrent_sessions: int = Field(10, description="Maximum concurrent sessions to monitor")
-    session_timeout: int = Field(3600, description="Session timeout in seconds")
-    
-    # Database Configuration
-    db_pool_min: int = Field(2, description="Minimum database connections")
-    db_pool_max: int = Field(10, description="Maximum database connections")
-    
-    # Security
-    secret_key: str = Field(..., description="Secret key for JWT tokens")
-    cors_origins: List[str] = Field(
-        ["http://localhost:3000", "http://localhost:8000"],
-        description="CORS allowed origins"
-    )
-    
-    # Monitoring & Observability
-    enable_tracing: bool = Field(False, description="Enable OpenTelemetry tracing")
-    otel_exporter_otlp_endpoint: Optional[str] = Field(None, description="OTLP endpoint")
-    enable_metrics: bool = Field(True, description="Enable Prometheus metrics")
-    metrics_port: int = Field(9090, description="Metrics server port")
-    
-    # Feature Flags
-    enable_experimental_features: bool = Field(False, description="Enable experimental features")
-    enable_ai_analytics: bool = Field(True, description="Enable AI-powered analytics")
-    enable_auto_issues: bool = Field(False, description="Enable automatic issue creation")
-    
-    # External Services
-    redis_url: Optional[str] = Field("redis://localhost:6379/0", description="Redis URL")
-    webhook_url: Optional[str] = Field(None, description="Webhook URL for notifications")
-    
-    # Development Settings
-    debug: bool = Field(False, description="Enable debug mode")
-    environment: Environment = Field(Environment.PRODUCTION, description="Environment")
-    log_sql_queries: bool = Field(False, description="Log SQL queries")
-    mock_claude_sdk: bool = Field(False, description="Mock Claude SDK for testing")
+    """Application settings with environment variable support."""
     
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
     
-    @validator("cors_origins", pre=True)
-    def parse_cors_origins(cls, v):
-        """Parse CORS origins from comma-separated string"""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
+    # Supabase Configuration
+    supabase_url: str = Field(..., description="Supabase project URL")
+    supabase_key: SecretStr = Field(..., description="Supabase anon key")
+    supabase_service_role_key: SecretStr = Field(..., description="Supabase service role key")
+    
+    # Anthropic/Claude Configuration
+    anthropic_api_key: SecretStr = Field(..., description="Anthropic API key")
+    
+    # Application Configuration
+    secret_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(os.urandom(32).hex()),
+        description="Application secret key",
+    )
+    
+    # Privacy Settings
+    privacy_mode: Literal["strict", "moderate", "minimal"] = Field(
+        default="strict",
+        description="Privacy protection level",
+    )
+    
+    # GitHub Integration (Optional)
+    github_token: Optional[SecretStr] = Field(None, description="GitHub personal access token")
+    github_repo: Optional[str] = Field(None, description="GitHub backup repository")
+    
+    # Monitoring Settings
+    auto_sync_interval: int = Field(default=300, description="Auto-sync interval in seconds")
+    session_timeout: int = Field(default=3600, description="Session timeout in seconds")
+    
+    # Logging Configuration
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
+        default="INFO",
+        description="Logging level",
+    )
+    log_file: Path = Field(
+        default=Path("logs/claude-tracer.log"),
+        description="Log file path",
+    )
+    
+    # API Server Configuration
+    api_host: str = Field(default="0.0.0.0", description="API server host")
+    api_port: int = Field(default=8000, description="API server port")
+    api_reload: bool = Field(default=False, description="Enable auto-reload for development")
+    cors_origins: str = Field(default="*", description="CORS allowed origins")
+    
+    # Database Configuration
+    database_url: Optional[str] = Field(None, description="Override database URL")
+    
+    # Redis Configuration (for caching)
+    redis_url: Optional[str] = Field(None, description="Redis connection URL")
+    
+    # Rate Limiting
+    rate_limit_requests: int = Field(default=1000, description="Rate limit requests per hour")
+    
+    # Export Settings
+    export_path: Path = Field(
+        default=Path("exports"),
+        description="Default export directory",
+    )
+    
+    @field_validator("log_file", "export_path")
+    @classmethod
+    def ensure_parent_exists(cls, v: Path) -> Path:
+        """Ensure parent directory exists for file paths."""
+        v.parent.mkdir(parents=True, exist_ok=True)
         return v
     
-    @validator("log_level")
-    def validate_log_level(cls, v):
-        """Validate log level"""
-        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if v.upper() not in valid_levels:
-            raise ValueError(f"Invalid log level: {v}")
-        return v.upper()
+    @field_validator("supabase_url")
+    @classmethod
+    def validate_supabase_url(cls, v: str) -> str:
+        """Validate Supabase URL format."""
+        if not v.startswith(("https://", "http://")):
+            raise ValueError("Supabase URL must start with https:// or http://")
+        if not v.endswith(".supabase.co"):
+            raise ValueError("Invalid Supabase URL format")
+        return v.rstrip("/")
     
     @property
-    def is_development(self) -> bool:
-        """Check if running in development mode"""
-        return self.environment == Environment.DEVELOPMENT
+    def supabase_headers(self) -> dict:
+        """Get headers for Supabase requests."""
+        return {
+            "apikey": self.supabase_key.get_secret_value(),
+            "Authorization": f"Bearer {self.supabase_key.get_secret_value()}",
+        }
     
     @property
-    def is_production(self) -> bool:
-        """Check if running in production mode"""
-        return self.environment == Environment.PRODUCTION
+    def supabase_service_headers(self) -> dict:
+        """Get service role headers for Supabase admin requests."""
+        return {
+            "apikey": self.supabase_service_role_key.get_secret_value(),
+            "Authorization": f"Bearer {self.supabase_service_role_key.get_secret_value()}",
+        }
     
-    @property
-    def is_testing(self) -> bool:
-        """Check if running in testing mode"""
-        return self.environment == Environment.TESTING
+    def get_privacy_patterns_path(self) -> Path:
+        """Get path to privacy patterns configuration file."""
+        return Path("config/privacy.yml")
+    
+    def is_github_enabled(self) -> bool:
+        """Check if GitHub integration is enabled."""
+        return self.github_token is not None and self.github_repo is not None
 
 
-@lru_cache()
+# Singleton instance
+_settings: Optional[Settings] = None
+
+
 def get_settings() -> Settings:
-    """Get cached settings instance"""
-    return Settings()
+    """Get or create settings instance."""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
+
+def reset_settings() -> None:
+    """Reset settings instance (mainly for testing)."""
+    global _settings
+    _settings = None

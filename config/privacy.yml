@@ -1,0 +1,65 @@
+# Claude Code Tracer - Custom Privacy Patterns Configuration
+#
+# This file allows you to define custom patterns for sensitive data detection.
+# Patterns are applied in addition to the built-in patterns.
+#
+# Sensitivity Levels:
+#   - MAXIMUM: Critical secrets (API keys, passwords, etc.)
+#   - HIGH: Important sensitive data (tokens, auth data)
+#   - MEDIUM: Personal information (email, phone)
+#   - LOW: Less sensitive but potentially private (IP addresses, paths)
+#
+# Privacy Modes (set in .env):
+#   - strict: All patterns are applied
+#   - moderate: Only HIGH and MAXIMUM patterns
+#   - minimal: Only MAXIMUM patterns
+
+custom_patterns:
+  # Example: Company-specific API keys
+  - name: "Company API Key"
+    pattern: 'COMPANY_KEY_[A-Z0-9]{32}'
+    description: "Internal company API keys"
+    level: MAXIMUM
+    replacement: "[COMPANY_API_KEY]"
+  
+  # Example: Internal service tokens
+  - name: "Service Token"
+    pattern: 'svc_token_[a-zA-Z0-9]{24}'
+    description: "Internal service authentication tokens"
+    level: HIGH
+    replacement: "[SERVICE_TOKEN]"
+  
+  # Example: Employee IDs
+  - name: "Employee ID"
+    pattern: 'EMP[0-9]{6}'
+    description: "Employee identification numbers"
+    level: MEDIUM
+    replacement: "[EMPLOYEE_ID]"
+  
+  # Example: Project codes
+  - name: "Project Code"
+    pattern: 'PROJ-[A-Z]{3}-[0-9]{4}'
+    description: "Internal project codes"
+    level: LOW
+    replacement: "[PROJECT_CODE]"
+  
+  # Example: Database names
+  - name: "Database Name"
+    pattern: '(?i)database["'']?\s*[:=]\s*["'']?([a-zA-Z0-9_-]+)["'']?'
+    description: "Database names in configuration"
+    level: MEDIUM
+    replacement: "database=[DATABASE_NAME]"
+  
+  # Example: Internal URLs
+  - name: "Internal URL"
+    pattern: 'https?://[a-zA-Z0-9-]+\.internal\.company\.com[^\s]*'
+    description: "Internal company URLs"
+    level: MEDIUM
+    replacement: "https://[INTERNAL_URL]"
+  
+  # Add your custom patterns below:
+  # - name: "Pattern Name"
+  #   pattern: 'regex_pattern_here'
+  #   description: "What this pattern detects"
+  #   level: HIGH
+  #   replacement: "[REPLACEMENT_TEXT]"  # Optional

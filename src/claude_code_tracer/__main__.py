@@ -1,130 +1,97 @@
-"""
-Claude Code Tracer - Main entry point
-"""
+"""Main entry point for Claude Code Tracer package."""
 
-import asyncio
-import logging
 import sys
-from typing import Optional
+import asyncio
+from pathlib import Path
 
-import click
-from rich.console import Console
-from rich.logging import RichHandler
+# Add src to path for development
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from .cli import cli
-from .utils.config import get_settings
-from .utils.logging import setup_logging
-
-console = Console()
+from claude_code_tracer.api.main import app
+from claude_code_tracer.utils.config import get_settings
 
 
-def setup_environment():
-    """Initialize environment and logging"""
-    settings = get_settings()
-    setup_logging(settings.log_level)
-    
-    # Configure rich logging
-    logging.basicConfig(
-        level=settings.log_level,
-        format="%(message)s",
-        handlers=[
-            RichHandler(
-                console=console,
-                rich_tracebacks=True,
-                tracebacks_show_locals=settings.debug
-            )
-        ]
-    )
-
-
-@click.group()
-@click.version_option(version="0.1.0", prog_name="claude-code-tracer")
-@click.pass_context
-def main(ctx):
-    """Claude Code Tracer - Track and analyze Claude Code interactions"""
-    setup_environment()
-    ctx.ensure_object(dict)
-
-
-@main.command()
-@click.option("--daemon", is_flag=True, help="Run in daemon mode")
-@click.option("--debug", is_flag=True, help="Enable debug mode")
-def start(daemon: bool, debug: bool):
-    """Start the Claude Code monitoring service"""
-    from .core.monitor import start_monitoring
-    
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    
-    try:
-        if daemon:
-            console.print("[green]Starting Claude Code Tracer in daemon mode...[/green]")
-            # TODO: Implement proper daemon mode
-            asyncio.run(start_monitoring())
-        else:
-            console.print("[green]Starting Claude Code Tracer...[/green]")
-            asyncio.run(start_monitoring())
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Monitoring stopped by user[/yellow]")
-        sys.exit(0)
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
-        sys.exit(1)
-
-
-@main.command()
-def stop():
-    """Stop the Claude Code monitoring service"""
-    # TODO: Implement stop functionality
-    console.print("[yellow]Stop command not yet implemented[/yellow]")
-
-
-@main.command()
-def status():
-    """Check the status of the monitoring service"""
-    # TODO: Implement status check
-    console.print("[yellow]Status command not yet implemented[/yellow]")
-
-
-@main.group()
-def sessions():
-    """Manage Claude Code sessions"""
-    pass
-
-
-@sessions.command("list")
-@click.option("--limit", default=10, help="Number of sessions to display")
-@click.option("--status", help="Filter by status (active, completed, error)")
-def list_sessions(limit: int, status: Optional[str]):
-    """List recent Claude Code sessions"""
-    from .cli.sessions import list_sessions as _list_sessions
-    
-    asyncio.run(_list_sessions(limit, status))
-
-
-@sessions.command("show")
-@click.argument("session_id")
-def show_session(session_id: str):
-    """Show details of a specific session"""
-    from .cli.sessions import show_session as _show_session
-    
-    asyncio.run(_show_session(session_id))
-
-
-@main.command()
-@click.option("--host", default="0.0.0.0", help="Web server host")
-@click.option("--port", default=8000, help="Web server port")
-def web(host: str, port: int):
-    """Start the web dashboard"""
+def main():
+    """Main CLI entry point."""
     import uvicorn
+    import click
     
-    console.print(f"[green]Starting web dashboard at http://{host}:{port}[/green]")
-    uvicorn.run(
-        "claude_code_tracer.api.main:app",
-        host=host,
-        port=port,
-        reload=True
-    )
+    @click.group()
+    def cli():
+        """Claude Code Tracer - Monitor and analyze your Claude Code sessions."""
+        pass
+    
+    @cli.command()
+    @click.option('--host', default='0.0.0.0', help='Host to bind to')
+    @click.option('--port', default=8000, help='Port to bind to')
+    @click.option('--reload', is_flag=True, help='Enable auto-reload')
+    def api(host, port, reload):
+        """Start the FastAPI server."""
+        settings = get_settings()
+        
+        print(f"🚀 Starting Claude Code Tracer API on {host}:{port}")
+        print(f"📝 Docs available at: http://{host}:{port}/docs")
+        
+        uvicorn.run(
+            "claude_code_tracer.api.main:app",
+            host=host,
+            port=port,
+            reload=reload or settings.api_reload,
+            log_level=settings.log_level.lower(),
+        )
+    
+    @cli.command()
+    def monitor():
+        """Start the Claude Code monitor (mock mode for now)."""
+        print("⚠️  Note: claude-code-sdk is not a real package.")
+        print("🔧 Running in mock mode for demonstration...")
+        
+        # For now, just show what would happen
+        print("\n📝 Monitor would:")
+        print("  - Watch for Claude Code sessions")
+        print("  - Apply privacy protection")
+        print("  - Save to Supabase")
+        print("\n💡 To test the API instead, run: python -m claude_code_tracer api")
+    
+    @cli.command()
+    def setup_db():
+        """Set up the database schema."""
+        import subprocess
+        
+        print("🗄️  Setting up database schema...")
+        try:
+            subprocess.run([sys.executable, "scripts/setup_db.py"], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Database setup failed: {e}")
+            sys.exit(1)
+    
+    @cli.command()
+    def check():
+        """Check configuration and dependencies."""
+        print("🔍 Checking Claude Code Tracer configuration...")
+        
+        try:
+            settings = get_settings()
+            print("✅ Configuration loaded successfully")
+            print(f"   - Privacy mode: {settings.privacy_mode}")
+            print(f"   - Log level: {settings.log_level}")
+            print(f"   - Supabase URL: {settings.supabase_url}")
+            
+            # Check if .env exists
+            if not Path(".env").exists():
+                print("\n⚠️  Warning: .env file not found")
+                print("   Run: cp .env.example .env")
+                print("   Then edit .env with your credentials")
+            
+        except Exception as e:
+            print(f"❌ Configuration error: {e}")
+            print("\n💡 Make sure to:")
+            print("   1. Copy .env.example to .env")
+            print("   2. Fill in your Supabase and API credentials")
+            sys.exit(1)
+    
+    # Run the CLI
+    cli()
 
 
 if __name__ == "__main__":
