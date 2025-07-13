@@ -1,4 +1,12 @@
-# Claude Code Tracer 🔍
+# Claude Code Tracer 🔍 [ARCHIVED]
+
+> **⚠️ This project is archived as of 2025-07-13**
+> 
+> **Status**: Development suspended due to technical limitations with Claude CLI's complex UI rendering.
+> 
+> **Issue**: Claude CLI uses a rich, animated terminal UI that makes clean text extraction extremely difficult through PTY monitoring. The constant screen updates, animations (Honking, Processing, Wrangling), and complex ANSI escape sequences prevent reliable capture of conversation content.
+> 
+> **Future**: Waiting for official logging/monitoring features from Anthropic Claude CLI team.
 
 <pre>
 ╭─────────────────────────────────────────────────────────────────────╮
